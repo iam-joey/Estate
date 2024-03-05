@@ -6,7 +6,7 @@ function Header() {
   return (
     <>
       <header className="p-2 bg-slate-300 shadow-md">
-        <div className="flex items-center justify-between max-w-6xl mx-auto p-4 ">
+        <div className="flex items-center justify-between max-w-6xl mx-auto p-2 ">
           <Link to="/">
             <h1 className="flex flex-wrap font-bold text-xl sm:text-2xl font-sans">
               <span className="text-gray-500">JOEY</span>
