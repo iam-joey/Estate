@@ -1,18 +1,28 @@
 import { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+
 import {
   getDownloadURL,
   getStorage,
   ref,
   uploadBytesResumable,
 } from "firebase/storage";
+import {
+  updateUserFail,
+  updateUserStart,
+  updateUserSuccess,
+} from "../../redux/user/userSlice";
 
 function Profile() {
-  const { currentUser } = useSelector((state: any) => state.user);
+  const dispatch = useDispatch();
+  const { currentUser, loading, error } = useSelector(
+    (state: any) => state.user
+  );
   const fileRef = useRef(null);
   const [file, setFile] = useState(null);
   const [filePercentage, setFilePercentage] = useState(0);
-  const [error, setError] = useState(false);
+  const [errorPicUpdate, setErrorPicUpdating] = useState(false);
+  const [updateSuccess, setUpdateSuccess] = useState(false);
   const [formData, setFormData] = useState({});
   useEffect(() => {
     if (file) {
@@ -35,7 +45,7 @@ function Profile() {
       },
       (error) => {
         console.log(error);
-        setError(true);
+        setErrorPicUpdating(true);
       },
       () => {
         getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
@@ -45,11 +55,42 @@ function Profile() {
       }
     );
   };
+  console.log(formData);
+  const handleFormChange = (e: any) => {
+    setFormData({ ...formData, [e.target.id]: e.target.value });
+  };
+
+  const handleSumbit = async (e: any) => {
+    try {
+      e.preventDefault();
+      console.log("form data", formData);
+      dispatch(updateUserStart());
+      const res = await fetch(`/api/user/update/${currentUser._id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      console.log("data is", data);
+      if (data.success === false) {
+        dispatch(updateUserFail(data.message));
+      }
+      dispatch(updateUserSuccess(data));
+      setUpdateSuccess(true);
+    } catch (error) {
+      console.error("Error:", error);
+      //@ts-ignore
+      dispatch(updateUserFail(error.message));
+    }
+  };
 
   return (
     <div className="p-3 m-4 max-w-lg mx-auto">
       <h1 className="text-4xl text-center">Profile</h1>
       <form
+        onSubmit={handleSumbit}
         action=""
         className="flex flex-col gap-8 mt-6
       "
@@ -63,7 +104,7 @@ function Profile() {
           onClick={() => fileRef.current.click()}
         />
         <p className="text-center">
-          {error ? (
+          {errorPicUpdate ? (
             <span className="text-red-600">Error while uploading file</span>
           ) : filePercentage > 0 && filePercentage < 100 ? (
             <span className="text-blue-600">
@@ -87,21 +128,37 @@ function Profile() {
         />
         <input
           type="text"
-          value={currentUser.username}
+          defaultValue={currentUser.username}
           className="p-3"
           placeholder="UserName"
+          onChange={handleFormChange}
+          id="username"
         />
         <input
           type="email"
-          value={currentUser.email}
+          defaultValue={currentUser.email}
           placeholder="Email"
           className="p-3"
+          onChange={handleFormChange}
+          id="email"
         />
-        <input type="password" placeholder="Password" className="p-3" />
-        <button className="bg-slate-600 p-3 rounded-xl text-white">
-          Update
+        <input
+          type="password"
+          placeholder="Password"
+          className="p-3"
+          onChange={handleFormChange}
+          id="password"
+        />
+        <button
+          disabled={loading}
+          className="bg-slate-600 p-3 rounded-xl text-white hover:opacity-95 disabled:opacity-80"
+        >
+          {loading ? "Loading..." : "Update"}
         </button>
       </form>
+      <p className="text-center text-green-600">
+        {updateSuccess && "Updated Successfully"}
+      </p>
       <div className="flex justify-between p-3 ">
         <span className="text-lg text-red-600 cursor-pointer">
           Delete Account
