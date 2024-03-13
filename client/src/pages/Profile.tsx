@@ -8,6 +8,12 @@ import {
   uploadBytesResumable,
 } from "firebase/storage";
 import {
+  deleteUserFail,
+  deleteUserStart,
+  deleteUserSuccess,
+  signOutFailure,
+  signOutUserStart,
+  signOutuserSuccess,
   updateUserFail,
   updateUserStart,
   updateUserSuccess,
@@ -79,10 +85,49 @@ function Profile() {
       }
       dispatch(updateUserSuccess(data));
       setUpdateSuccess(true);
+      //setTimeout(() => setUpdateSuccess(false), 2000); // Reset after 2 seconds
     } catch (error) {
       console.error("Error:", error);
       //@ts-ignore
       dispatch(updateUserFail(error.message));
+    }
+  };
+
+  const deleteHandler = async () => {
+    try {
+      dispatch(deleteUserStart());
+      const res = await fetch(`/api/user/delete/${currentUser._id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await res.json();
+      console.log("data is", data);
+      if (data.success === false) {
+        dispatch(deleteUserFail(data.message));
+      }
+      dispatch(deleteUserSuccess(data));
+    } catch (error) {
+      console.error("Error:", error);
+      //@ts-ignore
+      dispatch(deleteUserFail(error.message));
+    }
+  };
+
+  const handleSignout = async () => {
+    try {
+      dispatch(signOutUserStart());
+      const res = await fetch("/api/auth/signout");
+      const data = await res.json();
+      if (data.success === false) {
+        dispatch(signOutFailure(data.message));
+        return;
+      }
+      dispatch(signOutuserSuccess());
+    } catch (error) {
+      //@ts-ignore
+      dispatch(signOutFailure(error.message));
     }
   };
 
@@ -156,14 +201,22 @@ function Profile() {
           {loading ? "Loading..." : "Update"}
         </button>
       </form>
-      <p className="text-center text-green-600">
+      <p className="text-center text-green-600 mt-3">
         {updateSuccess && "Updated Successfully"}
       </p>
       <div className="flex justify-between p-3 ">
-        <span className="text-lg text-red-600 cursor-pointer">
+        <span
+          onClick={deleteHandler}
+          className="text-lg text-red-600 cursor-pointer"
+        >
           Delete Account
         </span>
-        <span className="text-lg text-red-600 cursor-pointer">Sign Out</span>
+        <span
+          onClick={handleSignout}
+          className="text-lg text-red-600 cursor-pointer"
+        >
+          Sign Out
+        </span>
       </div>
     </div>
   );
