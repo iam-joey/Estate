@@ -18,6 +18,7 @@ import {
   updateUserStart,
   updateUserSuccess,
 } from "../../redux/user/userSlice";
+import { Link } from "react-router-dom";
 
 function Profile() {
   const dispatch = useDispatch();
@@ -137,14 +138,14 @@ function Profile() {
       <form
         onSubmit={handleSumbit}
         action=""
-        className="flex flex-col gap-8 mt-6
+        className="flex flex-col gap-5 mt-6
       "
       >
         <img
           //@ts-ignore
           src={formData.avatar || currentUser.avatar}
           alt="image"
-          className="h-20 w-20 self-center rounded-full cursor-pointer"
+          className="h-32 w-32 self-center rounded-full cursor-pointer"
           //@ts-ignore
           onClick={() => fileRef.current.click()}
         />
@@ -196,12 +197,18 @@ function Profile() {
         />
         <button
           disabled={loading}
-          className="bg-slate-600 p-3 rounded-xl text-white hover:opacity-95 disabled:opacity-80"
+          className="bg-slate-600 p-3 rounded-xl text-white hover:opacity-95 disabled:opacity-80 uppercase"
         >
           {loading ? "Loading..." : "Update"}
         </button>
+        <Link
+          to="/create-listing"
+          className="p-3 text-center text-white bg-green-600 rounded-lg hover:opacity-90"
+        >
+          Create Link
+        </Link>
       </form>
-      <p className="text-center text-green-600 mt-3">
+      <p className="text-center text-green-600 mt-2">
         {updateSuccess && "Updated Successfully"}
       </p>
       <div className="flex justify-between p-3 ">
