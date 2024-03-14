@@ -1,4 +1,87 @@
+import { useState } from "react";
+import {
+  getDownloadURL,
+  getStorage,
+  ref,
+  uploadBytesResumable,
+} from "firebase/storage";
+import { app } from "../firebase";
+
 function CreatingList() {
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [formData, setFormData] = useState({
+    imageUrls: [],
+  });
+  const [uploadingStatus, setUploadingStatus] = useState(false);
+  const [imageError, setImageError] = useState("");
+  console.log(uploadingStatus);
+  console.log(formData);
+  const handleUploadImage = () => {
+    if (
+      imageFiles.length > 0 &&
+      imageFiles.length + formData.imageUrls.length <= 6
+    ) {
+      setUploadingStatus(true);
+      setImageError("");
+      const promiseImageUrls: Promise<string>[] = [];
+
+      for (let i = 0; i < imageFiles.length; i++) {
+        promiseImageUrls.push(uploadFileToFireBase(imageFiles[i]));
+      }
+
+      Promise.all(promiseImageUrls)
+        .then((urls) => {
+          setFormData({
+            ...formData,
+            //@ts-ignore
+            imageUrls: formData.imageUrls.concat(urls),
+          });
+          setUploadingStatus(false); // Update uploading status after successful upload
+        })
+        .catch((error) => {
+          setUploadingStatus(false);
+          setImageError(error);
+        });
+      setUploadingStatus(false);
+    } else {
+      setImageError("You can only upload 6 images");
+      setUploadingStatus(false);
+    }
+  };
+
+  const uploadFileToFireBase = (file: File) => {
+    return new Promise<string>((resolve, reject) => {
+      const storage = getStorage(app);
+      const fileName = new Date().getTime() + file.name;
+      const storageRef = ref(storage, fileName);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const progress =
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log("Upload is " + progress + "% done");
+        },
+        (error) => {
+          console.log(error);
+          reject(error);
+        },
+        () => {
+          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+            resolve(downloadURL);
+          });
+        }
+      );
+    });
+  };
+
+  const handleDeleteUploadedImage = (index: any) => {
+    setFormData({
+      ...formData,
+      imageUrls: formData.imageUrls.filter((_, i) => i !== index),
+    });
+  };
+
   return (
     <main className="p-3 max-w-4xl mx-auto">
       <h1 className="font-semibold text-center text-3xl my-7">
@@ -11,10 +94,8 @@ function CreatingList() {
             placeholder="Name"
             className="border p-3 rounded-lg"
             id="name"
-            //@ts-ignore
-            maxLength="62"
-            //@ts-ignore
-            minLength="10"
+            maxLength={62}
+            minLength={10}
             required
           />
           <textarea
@@ -32,7 +113,7 @@ function CreatingList() {
             required
           />
           <div className="flex gap-6 flex-wrap">
-            <div className=" flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <input
                 className="w-5 h-5"
                 type="checkbox"
@@ -42,16 +123,16 @@ function CreatingList() {
               <span className="">Sell</span>
             </div>
 
-            <div className=" flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <input
                 className="w-5 h-5"
                 type="checkbox"
                 name="rent"
-                id="sale"
+                id="rent"
               />
               <span className="">Rent</span>
             </div>
-            <div className=" flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <input
                 className="w-5 h-5"
                 type="checkbox"
@@ -60,7 +141,7 @@ function CreatingList() {
               />
               <span className="">Parking spot</span>
             </div>
-            <div className=" flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <input
                 className="w-5 h-5"
                 type="checkbox"
@@ -69,45 +150,45 @@ function CreatingList() {
               />
               <span className="">Furnished</span>
             </div>
-            <div className=" flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <input
                 className="w-5 h-5"
                 type="checkbox"
-                name="sale"
-                id="sale"
+                name="offer"
+                id="offer"
               />
               <span className="">Offer</span>
             </div>
           </div>
           <div className="flex gap-6 flex-wrap">
-            <div className=" flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <input
                 type="number"
                 id="bedrooms"
-                min="1"
-                max="10"
+                min={1}
+                max={10}
                 required
                 className="p-3 border border-gray-300 rounded-lg"
               />
               <p className="ml-2">Beds</p>
             </div>
-            <div className=" flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <input
                 type="number"
                 id="bathrooms"
-                min="1"
-                max="10"
+                min={1}
+                max={10}
                 required
                 className="p-3 border border-gray-300 rounded-lg"
               />
               <p className="ml-2">Bathrooms</p>
             </div>
-            <div className=" flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <input
                 type="number"
                 id="regularPrice"
-                min="1"
-                max="10"
+                min={1}
+                max={10}
                 required
                 className="p-3 border border-gray-300 rounded-lg"
               />
@@ -116,12 +197,12 @@ function CreatingList() {
                 <span className="text-xs">($/Month)</span>
               </div>
             </div>
-            <div className=" flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <input
                 type="number"
                 id="discountedPrice"
-                min="1"
-                max="10"
+                min={1}
+                max={10}
                 required
                 className="p-3 border border-gray-300 rounded-lg"
               />
@@ -143,12 +224,44 @@ function CreatingList() {
             <input
               type="file"
               accept="image/*"
+              multiple
+              onChange={(e) => {
+                setImageFiles(Array.from(e.target.files || []));
+              }}
               className="border border-slate-200 p-4 w-full rounded-r-lg"
             />
-            <button className="border border-green-400 p-4 rounded-lg text-green-500 uppercase hover:shadow-md hover:opacity-95">
-              Upload
+
+            <button
+              type="button"
+              disabled={uploadingStatus}
+              onClick={handleUploadImage}
+              className="border border-green-400 p-4 rounded-lg text-green-500 uppercase hover:shadow-md hover:opacity-75 disabled:opacity-80 text-white bg-green-700"
+            >
+              {uploadingStatus ? "Uploading..." : "Upload"}
             </button>
           </div>
+          {imageError && (
+            <div className="text-red-700 text-sm">{imageError}</div>
+          )}
+          {formData.imageUrls.length > 0 &&
+            formData.imageUrls.map((url, index) => (
+              <div key={url} className="flex justify-between ">
+                <img
+                  key={index}
+                  src={url}
+                  alt="image"
+                  className="h-14 w-14 object-cover rounded-lg"
+                />
+                <button
+                  type="button"
+                  //@ts-ignore
+                  onClick={() => handleDeleteUploadedImage(index)}
+                  className="text-red-700 text-sm uppercase hover:opacity-95"
+                >
+                  delete
+                </button>
+              </div>
+            ))}
           <button className="bg-slate-600 p-3 rounded-lg text-white hover:opacity-90">
             Create Listing
           </button>

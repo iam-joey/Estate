@@ -19,6 +19,7 @@ import {
   updateUserSuccess,
 } from "../../redux/user/userSlice";
 import { Link } from "react-router-dom";
+import { app } from "../firebase";
 
 function Profile() {
   const dispatch = useDispatch();
@@ -38,7 +39,7 @@ function Profile() {
   }, [file]);
 
   const handleFileUpload = (file: any) => {
-    const storage = getStorage();
+    const storage = getStorage(app);
     const fileName = new Date().getTime() + file.name;
     const storageRef = ref(storage, fileName);
     const uploadTask = uploadBytesResumable(storageRef, file);
