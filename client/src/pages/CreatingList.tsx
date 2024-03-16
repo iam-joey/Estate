@@ -139,7 +139,7 @@ function CreatingList() {
     if (formData.imageUrls.length === 0) {
       return setSubmitError("Please upload at least one image");
     }
-    if (formData.regularPrice < formData.discountedPrice) {
+    if (+formData.regularPrice < +formData.discountedPrice) {
       return setSubmitError(
         "Discounted price cannot be greater than regular price"
       );
@@ -163,6 +163,7 @@ function CreatingList() {
     setLoading(false);
     navigate(`/listing/${data._id}`);
   };
+  console.log(formData);
   return (
     <main className="p-3 max-w-4xl mx-auto">
       <h1 className="font-semibold text-center text-3xl my-7">
