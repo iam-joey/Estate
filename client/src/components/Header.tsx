@@ -1,10 +1,30 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { CiSearch } from "react-icons/ci";
-import { UseSelector, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
+import { useEffect, useState } from "react";
 
 function Header() {
   const { currentUser } = useSelector((state: any) => state.user);
+  const [search, setSearch] = useState("");
+  const navigate = useNavigate();
+  const handleSearchSubmit = (e: any) => {
+    e.preventDefault();
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set("searchTerm", search);
+    navigate(`/search?${urlParams.toString()}`);
+  };
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchTerm = urlParams.get("searchTerm");
+    if (searchTerm) {
+      setSearch(searchTerm);
+    }
+    if (!searchTerm) {
+      setSearch("");
+    }
+  }, [location.search]);
   return (
     <>
       <header className="p-2 bg-slate-300 shadow-md">
@@ -20,8 +40,12 @@ function Header() {
               className=" w-28 sm:w-64 bg-transparent focus:outline-none"
               type="text"
               placeholder="Search...."
+              onChange={(e) => setSearch(e.target.value)}
+              value={search}
             />
-            <CiSearch className="text-xl cursor-pointer" />
+            <button onClick={handleSearchSubmit}>
+              <CiSearch className="text-xl cursor-pointer" />
+            </button>
           </form>
           <ul className="flex sm:gap-10">
             <Link to="/">

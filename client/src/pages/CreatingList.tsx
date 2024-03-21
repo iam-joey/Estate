@@ -69,6 +69,7 @@ function CreatingList() {
   };
 
   const handleUploadImage = () => {
+    setImageError("");
     if (
       imageFiles.length > 0 &&
       imageFiles.length + formData.imageUrls.length <= 6
